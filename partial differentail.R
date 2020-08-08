@@ -37,8 +37,8 @@ ggplot(df, aes(x=ww0, y=ww1, z=ff)) +
 # 3d plot with plotly
 z = df %>% 
 	select(ww0, ww1, ff) %>% 
-	pivot_wider(names_from=ww1, values_from=ff) %>%
-	select(-ww0) %>%
+	pivot_wider(names_from=ww0, values_from=ff) %>%
+	select(-ww1) %>%
 	data.matrix()
 # plot_ly(df, x=~ww0, y=~ww1, z=~ff, color=~ff) %>% add_trace(type='mesh3d')
 plot_ly(x=w0, y=w1, z=z) %>% 
