@@ -20,15 +20,9 @@ w_range = 2
 dw = 0.25
 w0 = seq(-w_range, w_range, dw)
 w1 = seq(-w_range, w_range, dw)
-# ff = matrix(0, length(w0), length(w1))
-# dff_dw0 = matrix(0, length(w0), length(w1))
-# dff_dw1  = matrix(0, length(w0), length(w1))
 
-
-
-
+# f is surface in 3d space
 # contour plot
-
 df <- tibble(ww0 = w0) %>%
 	mutate(ww1 = list(w1)) %>%
 	unnest(ww1) %>%
@@ -53,7 +47,8 @@ plot_ly(x=w0, y=w1, z=z) %>%
 		usecolormap=TRUE,
 		highlightcolor="#ff0000",project=list(z=TRUE))))
 
-# quiver plot
+# quiver plot show which direction the gradient points 
+# the minima is at the oposite direction of the gradient 
 library(ggquiver)
 
 ggplot(df) +
