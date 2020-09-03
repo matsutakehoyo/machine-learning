@@ -3,13 +3,10 @@
 library(tidyverse)
 library(plotly)
 
-# make some random data for the heiught of people based on their age
+# make some random data for the heiught (t) of people based on their age (x)
 x_min <- 4 
 x_max <- 30
-x_n <- 16
-
-Prm_c <- c(170, 108, 0.2)
-
+x_n <- 20
 
 df <- tibble(x　=　5 + 25 * runif(x_n))　%>%
 	mutate(T = 170 - 108 * exp( -0.2 * x) + 4 * rnorm(x_n))
@@ -55,9 +52,10 @@ plot_ly(x=x1, y=x2, z=z) %>%
 		highlightcolor="#ff0000",project=list(z=TRUE))))
 
 # use steepest descent to calculate the w_1 and w_2 that minimize the square erro J
-# start in a random position and calculate the gradient and move a little bit to the oposite direction
-# the amount to move is alpha
-# evaluate and do the same in the new position untill the gradient is arbitrarily small
+# start in a random position and calculate the gradient and move a little bit (alpha) to 
+# the oposite direction. 
+# evaluate and do the same in the new position untill the gradient is arbitrarily small (epsilon)
+
 
 # this calculates the gradient at w_1 and w_2 (partial differential of mean square error J)
 # J = 1/N ∑(y-t)^2
@@ -72,8 +70,6 @@ dmse_line <- function(x, t, w_1, w_2){
 	d_w2 = 2 * mean(y-t)
 	return(c(d_w1, d_w2))
 }
-
-dmse_line(df$x, df$T, 10, 165)
 
 w_init = c(-10, 165)
 alpha = 0.01
@@ -99,6 +95,9 @@ fit_line_num <- function(x, t){
 line_fit <- fit_line_num(df$x, df$T)
 
 history <- line_fit[[3]] %>% as_tibble()
+
+#  this is the mse error of the estimate
+mse_line(df$x, df$T, line_fit[[1]], line_fit[[2]])
 
 ggplot() + 
 	geom_point(aes(x=x, y=T), data=df) + 
