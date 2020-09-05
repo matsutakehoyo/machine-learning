@@ -66,23 +66,26 @@ dmse_plane <- function(x1, x2, t, w1, w2, w3){
 
 # dmse_plane(df$x1, df$x2, df$t, 1.5, 1, 90)
 # dmse_plane(df$x1, df$x2, df$t, 0.64, 1.015, 92)
+
+
+# find w that minimize J numerically 
+
 w_init = c(1.5, 1, 90)
 alpha = 0.00001
 eps = 0.0001
-i_max = 100000
-# find w that minimize w numerically 
+i_max = 1000000
 fit_plane_num <- function(x1, x2, t){
 	w_i = matrix(data=0, nrow=i_max, ncol=3)
 	w_i[1,] <- w_init
 	for (i in 2:i_max){
 		# calculate gradient
 		dmse = dmse_plane(x1, x2, t, w_i[i-1, 1], w_i[i-1, 2], w_i[i-1, 3])
-		print(paste("dmse", dmse))
+		# print(paste("dmse", dmse))
 		# update gradient
 		w_i[i, 1] = w_i[i-1, 1] - alpha * dmse[1]
 		w_i[i, 2] = w_i[i-1, 2] - alpha * dmse[2]
 		w_i[i, 3] = w_i[i-1, 3] - alpha * dmse[3]
-		print(paste("w:", w_i[i, ]))
+		# print(paste("w:", w_i[i, ]))
 		if (abs(dmse[1])<eps & abs(dmse[2])<eps & abs(dmse[3])<eps ) break
 	}
 	w1 = w_i[i, 1]
@@ -94,7 +97,6 @@ fit_plane_num <- function(x1, x2, t){
 } 
 
 plane_fit <- fit_plane_num(df$x1, df$x2, df$t)
-
 history <- plane_fit[[4]] %>% as_tibble()
 
 plot_ly(history, x=~w1, y=~w2, z=~w3, type="scatter3d", mode="lines")
@@ -117,3 +119,51 @@ z = df_plane %>%
 
 plot_ly(x=px1, y=px2, z=z, type="surface") %>%
 	add_trace(data=df, x=~x1, y=~x2, z=~t, mode="markers", type="scatter3d")
+
+
+# wind w that minimize that minimize J analytically
+# ∂J/∂w1 = 2/N ∑(w1*x1+w2*x2+w3-t)x1 = 0
+# ∂J/∂w2 = 2/N ∑(w1*x1+w2*x2+w3-t)x2 = 0
+# ∂J/∂w3 = 2/N ∑((w1*x1+w2*x2+w3-t)) = 0
+# X is the mean of x
+# X1^2w1 + X1X2w2 + X1w3 = TX1
+# X1X2*w1 + X2^2W2 + X2w3 = TX2
+# X1w1 + X2w2 + w3 = T 
+
+X1 = df$x1 %>% mean()
+X2 = df$x2 %>% mean()
+X1X2 = (df$x1 * df$x2) %>% mean()
+X1X1 = (df$x1 * df$x1) %>% mean()
+X2X2 = (df$x2 * df$x2) %>% mean()
+
+A = rbind(c(X1X1, X1X2, X1),
+		  c(X1X2, X2X2, X2),
+		  c(X1, X2, 1))
+
+T = df$t %>% mean()
+TX1 = (df$t * df$x1) %>% mean()
+TX2 = (df$t * df$x2) %>% mean()
+b = c(TX1, TX2, T)
+
+w_a <- solve(A, b)
+
+# mse of analytical solution
+mse_plane(df$x1, df$x2, df$t, w_a[1], w_a[2], w_a[])
+
+# plot the results
+df_plane_analytical <- expand_grid(px1, px2) %>%
+	mutate(py = w_a[1] * px1 + w_a[2] * px2 + w_a[3])
+
+
+z_analytical = df_plane_analytical %>% 
+	pivot_wider(names_from=px1, values_from=py) %>%
+	select(-px2) %>%
+	data.matrix()
+
+
+plot_ly(data=df, x=~x1, y=~x2, z=~t, mode="markers", type="scatter3d") %>%
+	add_trace(x=px1, y=px2, z=z, type="surface",  
+		colorscale = list(c(0,1),c("rgb(255,112,184)","rgb(128,0,64)"))) %>%
+	add_trace(x=px1, y=px2, z=z_analytical, type="surface", 
+		colorscale = list(c(0,1),c("rgb(107,184,214)","rgb(0,90,124)")))
+
