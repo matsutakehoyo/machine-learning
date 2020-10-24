@@ -114,26 +114,31 @@ dcee_logistic <- function(.data, var_x, var_t, w){
 	dcee = c(0,0)
 	for (i in 1:nrow(.data)){
 		dcee[1] = dcee[1] + (y[i] - t[i]) * x[i]
-		dcee[0] = dcee[0] + (y[i] - t[i])
+		dcee[2] = dcee[2] + (y[i] - t[i])
 	}
+	dcee = dcee/nrow(.data)
 	return(dcee)
 }
 
 dcee_logistic(df, x, t, c(1,1))
 
-# optim is not very reliable for this function, maybe another method?
-# also could not get optim to print estimates of at each iteration
-out <- capture.output(w <- nlm(cee_logistic_stable, w<-c(0,0), .data=df, var_x=x, var_t=t, print.level=2)$estimate ) 
+# find w using nlm
+# out <- capture.output(w <- nlm(cee_logistic_stable, w<-c(0,0), .data=df, var_x=x, var_t=t, print.level=2)$estimate ) 
+# # parse output to extract the estimated parameters
+# trace <- out[grep("Parameter:", out) + 1] %>% 
+# 	sub('\\[1\\] ', "", .) %>% 
+# 	# negative lookahead
+# 	# c(" 1 1") %>% sub(' (?!.*\\s)', ',', ., perl=TRUE)
+# 	sub('\\s(?!.*\\s)', ',', ., perl=TRUE) %>%
+# 	as.tibble() %>%
+# 	separate(value, into=c('w1', 'w2'), sep=',', convert=TRUE)
 
-# optim(w<-c(0,0), cee_logistic_stable, gr=dcee_logistic, .data=df, var_x=x, var_t=t, method="CG", control=list(trace=1))
 
-# parse output to extract the estimated parameters
-trace <- out[grep("Parameter:", out) + 1] %>% 
-	sub('\\[1\\] ', "", .) %>% 
-	# negative lookahead
-	# c(" 1 1") %>% sub(' (?!.*\\s)', ',', ., perl=TRUE)
-	sub('\\s(?!.*\\s)', ',', ., perl=TRUE) %>%
-	as.tibble() %>%
+out <- capture.output(w <- optim(w<-c(0,0), cee_logistic_stable, gr=dcee_logistic, .data=df, var_x=x, var_t=t, method="CG", control=list(trace=1))$par)
+trace <- out[grep("parameters", out)] %>% 
+	sub('parameters    ', "", .) %>% 
+	sub('[ ]{2,}', ',', .) %>%
+	as_tibble() %>%
 	separate(value, into=c('w1', 'w2'), sep=',', convert=TRUE)
 
 
