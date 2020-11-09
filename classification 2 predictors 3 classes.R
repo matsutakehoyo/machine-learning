@@ -11,7 +11,6 @@ sig = rbind(c(.7,.7), c(.8,.3), c(.3,.8))
 
 # probability
 p = c(.4, .8, 1)
-k = length(p)
 
 df <- tibble(wk=runif(n)) %>%	
 	# mutate(t = ifelse(wk<p[1], 0, 1)) %>%
